@@ -125,7 +125,7 @@ extension ImageStackView {
     }
   }
 
-  @objc func renderViews(_ assets: [AssetRef]) {
+  @objc func renderViews(_ assets: [ImagePickerAsset]) {
     if let firstView = views.first, assets.isEmpty {
       views.forEach {
         $0.image = nil

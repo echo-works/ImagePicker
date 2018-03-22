@@ -16,7 +16,7 @@ open class AssetManager {
     return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
   }
 
-  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [AssetRef]) -> Void) {
+  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [ImagePickerAsset]) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
     DispatchQueue.global(qos: .background).async {
@@ -31,13 +31,13 @@ open class AssetManager {
         })
 
         DispatchQueue.main.async {
-            completion(assets.map { AssetRef(phAsset: $0)})
+            completion(assets.map { ImagePickerAsset(phAsset: $0)})
         }
       }
     }
   }
 
-  open static func resolveAsset(_ asset: AssetRef, size: CGSize = CGSize(width: 720, height: 1280), shouldPreferLowRes: Bool = false, completion: @escaping (_ image: UIImage?) -> Void) {
+  open static func resolveAsset(_ asset: ImagePickerAsset, size: CGSize = CGSize(width: 720, height: 1280), shouldPreferLowRes: Bool = false, completion: @escaping (_ image: UIImage?) -> Void) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.deliveryMode = shouldPreferLowRes ? .fastFormat : .highQualityFormat
@@ -52,7 +52,7 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAssets(_ assets: [AssetRef], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
+  open static func resolveAssets(_ assets: [ImagePickerAsset], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.isSynchronous = true
@@ -70,7 +70,7 @@ open class AssetManager {
 }
 
 
-open class AssetRef: NSObject {
+open class ImagePickerAsset: NSObject {
     var phAsset: PHAsset?
     init(phAsset: PHAsset) {
         self.phAsset = phAsset
@@ -90,6 +90,6 @@ open class AssetRef: NSObject {
     
 }
 
-public func ==(lhs: AssetRef, rhs: AssetRef) -> Bool {
+public func ==(lhs: ImagePickerAsset, rhs: ImagePickerAsset) -> Bool {
     return lhs.hashValue == rhs.hashValue
 }
