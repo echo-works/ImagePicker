@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import Photos
 
+
 open class AssetManager {
 
   open static func getImage(_ name: String) -> UIImage {
@@ -15,7 +16,7 @@ open class AssetManager {
     return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
   }
 
-  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [PHAsset]) -> Void) {
+  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [AssetRef]) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
     DispatchQueue.global(qos: .background).async {
@@ -30,19 +31,19 @@ open class AssetManager {
         })
 
         DispatchQueue.main.async {
-          completion(assets)
+            completion(assets.map { AssetRef(phAsset: $0)})
         }
       }
     }
   }
 
-  open static func resolveAsset(_ asset: PHAsset, size: CGSize = CGSize(width: 720, height: 1280), shouldPreferLowRes: Bool = false, completion: @escaping (_ image: UIImage?) -> Void) {
+  open static func resolveAsset(_ asset: AssetRef, size: CGSize = CGSize(width: 720, height: 1280), shouldPreferLowRes: Bool = false, completion: @escaping (_ image: UIImage?) -> Void) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.deliveryMode = shouldPreferLowRes ? .fastFormat : .highQualityFormat
     requestOptions.isNetworkAccessAllowed = true
 
-    imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, info in
+    imageManager.requestImage(for: asset.phAsset!, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, info in
       if let info = info, info["PHImageFileUTIKey"] == nil {
         DispatchQueue.main.async(execute: {
           completion(image)
@@ -51,14 +52,14 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAssets(_ assets: [PHAsset], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
+  open static func resolveAssets(_ assets: [AssetRef], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.isSynchronous = true
 
     var images = [UIImage]()
     for asset in assets {
-      imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, _ in
+      imageManager.requestImage(for: asset.phAsset!, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, _ in
         if let image = image {
           images.append(image)
         }
@@ -66,4 +67,29 @@ open class AssetManager {
     }
     return images
   }
+}
+
+
+open class AssetRef: NSObject {
+    var phAsset: PHAsset?
+    init(phAsset: PHAsset) {
+        self.phAsset = phAsset
+        super.init()
+    }
+    
+    var duration: TimeInterval {
+        return 0
+    }
+    
+    
+    override open var hashValue: Int { get {
+        return phAsset!.localIdentifier.hashValue
+        }
+    }
+
+    
+}
+
+public func ==(lhs: AssetRef, rhs: AssetRef) -> Bool {
+    return lhs.hashValue == rhs.hashValue
 }

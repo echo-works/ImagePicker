@@ -78,7 +78,7 @@ open class ImageGalleryView: UIView {
     }()
 
   open lazy var selectedStack = ImageStack()
-  lazy var assets = [PHAsset]()
+  lazy var assets = [AssetRef]()
 
   weak var delegate: ImageGalleryPanGestureDelegate?
   var collectionSize: CGSize?
