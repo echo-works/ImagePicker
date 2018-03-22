@@ -15,6 +15,7 @@ open class BottomContainerView: UIView {
   }
 
   var configuration = Configuration()
+  var assetManager: ImagePickerAssetManager?
 
   lazy var pickerButton: ButtonPicker = { [unowned self] in
     let pickerButton = ButtonPicker(configuration: self.configuration)
@@ -44,8 +45,11 @@ open class BottomContainerView: UIView {
     return button
     }()
 
-  lazy var stackView = ImageStackView(frame: CGRect(x: 0, y: 0, width: 80, height: 80))
-
+    lazy var stackView: ImageStackView = { [unowned self] in 
+        let stack = ImageStackView(frame: CGRect(x: 0, y: 0, width: 80, height: 80), assetManager: self.assetManager)
+        return stack
+    }()
+  
   lazy var topSeparator: UIView = { [unowned self] in
     let view = UIView()
     view.backgroundColor = self.configuration.backgroundColor
@@ -65,9 +69,12 @@ open class BottomContainerView: UIView {
 
   // MARK: Initializers
 
-  public init(configuration: Configuration? = nil) {
+    public init(configuration: Configuration? = nil, assetManager: ImagePickerAssetManager? = nil) {
     if let configuration = configuration {
       self.configuration = configuration
+    }
+    if let assetManager = assetManager {
+        self.assetManager = assetManager
     }
     super.init(frame: .zero)
     configure()

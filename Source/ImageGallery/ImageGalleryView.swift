@@ -26,6 +26,7 @@ open class ImageGalleryView: UIView {
   }
 
   var configuration = Configuration()
+  var assetManager: ImagePickerAssetManager?
 
   lazy open var collectionView: UICollectionView = { [unowned self] in
     let collectionView = UICollectionView(frame: CGRect.zero,
@@ -89,9 +90,12 @@ open class ImageGalleryView: UIView {
 
   // MARK: - Initializers
 
-  public init(configuration: Configuration? = nil) {
+  public init(configuration: Configuration? = nil, assetManager: ImagePickerAssetManager? = nil) {
     if let configuration = configuration {
       self.configuration = configuration
+    }
+    if let assetManager = assetManager {
+        self.assetManager = assetManager
     }
     super.init(frame: .zero)
     configure()
@@ -159,7 +163,7 @@ open class ImageGalleryView: UIView {
   // MARK: - Photos handler
 
   func fetchPhotos(_ completion: (() -> Void)? = nil) {
-    AssetManager.fetch(withConfiguration: configuration) { assets in
+    assetManager?.fetch(withConfiguration: configuration) { assets in
       self.assets.removeAll()
       self.assets.append(contentsOf: assets)
       self.collectionView.reloadData()
@@ -231,7 +235,7 @@ extension ImageGalleryView: UICollectionViewDelegate {
 
     let asset = assets[(indexPath as NSIndexPath).row]
 
-    AssetManager.resolveAsset(asset, size: CGSize(width: 100, height: 100), shouldPreferLowRes: configuration.useLowResolutionPreviewImage) { image in
+    assetManager?.resolveAsset(asset, size: CGSize(width: 100, height: 100), shouldPreferLowRes: configuration.useLowResolutionPreviewImage) { image in
       guard image != nil else { return }
 
       if cell.selectedImageView.image != nil {

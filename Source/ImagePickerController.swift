@@ -12,6 +12,8 @@ import Photos
 open class ImagePickerController: UIViewController {
 
   let configuration: Configuration
+    
+  var assetManager: ImagePickerAssetManager
 
   struct GestureConstants {
     static let maximumHeight: CGFloat = 200
@@ -20,7 +22,7 @@ open class ImagePickerController: UIViewController {
   }
 
   open lazy var galleryView: ImageGalleryView = { [unowned self] in
-    let galleryView = ImageGalleryView(configuration: self.configuration)
+    let galleryView = ImageGalleryView(configuration: self.configuration, assetManager: self.assetManager)
     galleryView.delegate = self
     galleryView.selectedStack = self.stack
     galleryView.collectionView.layer.anchorPoint = CGPoint(x: 0, y: 0)
@@ -30,7 +32,7 @@ open class ImagePickerController: UIViewController {
     }()
 
   open lazy var bottomContainer: BottomContainerView = { [unowned self] in
-    let view = BottomContainerView(configuration: self.configuration)
+    let view = BottomContainerView(configuration: self.configuration, assetManager: self.assetManager)
     view.backgroundColor = self.configuration.bottomContainerColor
     view.delegate = self
 
@@ -91,18 +93,21 @@ open class ImagePickerController: UIViewController {
 
   // MARK: - Initialization
 
-  @objc public required init(configuration: Configuration = Configuration()) {
+  @objc public required init(configuration: Configuration = Configuration(), assetManager: ImagePickerAssetManager = AssetManager()) {
+    self.assetManager = assetManager
     self.configuration = configuration
     super.init(nibName: nil, bundle: nil)
   }
 
   public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
     self.configuration = Configuration()
+    self.assetManager = AssetManager()
     super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
   }
   
   public required init?(coder aDecoder: NSCoder) {
     self.configuration = Configuration()
+    self.assetManager = AssetManager()
     super.init(coder: aDecoder)
   }
 
@@ -348,6 +353,7 @@ open class ImagePickerController: UIViewController {
     guard isBelowImageLimit() && !isTakingPicture else { return }
     isTakingPicture = true
     bottomContainer.pickerButton.isEnabled = false
+    bottomContainer.stackView.assetManager = self.assetManager
     bottomContainer.stackView.startLoader()
     let action: () -> Void = { [weak self] in
       guard let `self` = self else { return }
@@ -373,9 +379,9 @@ extension ImagePickerController: BottomContainerViewDelegate {
   func doneButtonDidPress() {
     var images: [UIImage]
     if let preferredImageSize = preferredImageSize {
-      images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
+      images = assetManager.resolveAssets(stack.assets, size: preferredImageSize)
     } else {
-      images = AssetManager.resolveAssets(stack.assets)
+      images = assetManager.resolveAssets(stack.assets)
     }
 
     delegate?.doneButtonDidPress(self, images: images)
@@ -388,9 +394,9 @@ extension ImagePickerController: BottomContainerViewDelegate {
   func imageStackViewDidPress() {
     var images: [UIImage]
     if let preferredImageSize = preferredImageSize {
-        images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
+        images = assetManager.resolveAssets(stack.assets, size: preferredImageSize)
     } else {
-        images = AssetManager.resolveAssets(stack.assets)
+        images = assetManager.resolveAssets(stack.assets)
     }
 
     delegate?.wrapperDidPress(self, images: images)

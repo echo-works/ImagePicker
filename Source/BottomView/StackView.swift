@@ -10,8 +10,19 @@ class ImageStackView: UIView {
   struct Dimensions {
     static let imageSize: CGFloat = 58
   }
+    
+  init(frame: CGRect, assetManager: ImagePickerAssetManager?) {
+    super.init(frame: frame)
+    self.assetManager = assetManager
+    subscribe()
+    
+    views.forEach { addSubview($0) }
+    addSubview(activityView)
+    views.first?.alpha = 1
+  }
 
   weak var delegate: ImageStackViewDelegate?
+  var assetManager : ImagePickerAssetManager?
 
   lazy var activityView: UIActivityIndicatorView = {
     let view = UIActivityIndicatorView()
@@ -140,7 +151,7 @@ extension ImageStackView {
 
     for (index, view) in views.enumerated() {
       if index <= photos.count - 1 {
-        AssetManager.resolveAsset(photos[index], size: CGSize(width: Dimensions.imageSize, height: Dimensions.imageSize)) { image in
+        assetManager?.resolveAsset(photos[index], size: CGSize(width: Dimensions.imageSize, height: Dimensions.imageSize), shouldPreferLowRes: false) { image in
           view.image = image
         }
         view.alpha = 1

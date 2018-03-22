@@ -2,21 +2,35 @@ import Foundation
 import UIKit
 import Photos
 
+@objc public protocol ImagePickerAssetManager {
+  func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [ImagePickerAsset]) -> Void)
+  func resolveAsset(_ asset: ImagePickerAsset, size: CGSize, shouldPreferLowRes: Bool, completion: @escaping (_ image: UIImage?) -> Void)
+  func resolveAssets(_ assets: [ImagePickerAsset], size: CGSize) -> [UIImage]
+    
+}
 
-open class AssetManager {
-
-  open static func getImage(_ name: String) -> UIImage {
-    let traitCollection = UITraitCollection(displayScale: 3)
-    var bundle = Bundle(for: AssetManager.self)
-
-    if let resource = bundle.resourcePath, let resourceBundle = Bundle(path: resource + "/ImagePicker.bundle") {
-      bundle = resourceBundle
+extension ImagePickerAssetManager {
+    public static func getImage(_ name: String) -> UIImage {
+        let traitCollection = UITraitCollection(displayScale: 3)
+        var bundle = Bundle(for: AssetManager.self)
+        
+        if let resource = bundle.resourcePath, let resourceBundle = Bundle(path: resource + "/ImagePicker.bundle") {
+            bundle = resourceBundle
+        }
+        
+        return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
     }
+    
+    public func resolveAssets(_ assets: [ImagePickerAsset]) -> [UIImage] {
+        return self.resolveAssets(assets, size: CGSize(width: 720, height: 1280))
+    }
+    
+}
 
-    return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
-  }
+open class AssetManager: NSObject, ImagePickerAssetManager {
+  
 
-  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [ImagePickerAsset]) -> Void) {
+  open func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [ImagePickerAsset]) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
     DispatchQueue.global(qos: .background).async {
@@ -37,7 +51,7 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAsset(_ asset: ImagePickerAsset, size: CGSize = CGSize(width: 720, height: 1280), shouldPreferLowRes: Bool = false, completion: @escaping (_ image: UIImage?) -> Void) {
+  open func resolveAsset(_ asset: ImagePickerAsset, size: CGSize = CGSize(width: 720, height: 1280), shouldPreferLowRes: Bool = false, completion: @escaping (_ image: UIImage?) -> Void) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.deliveryMode = shouldPreferLowRes ? .fastFormat : .highQualityFormat
@@ -52,7 +66,7 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAssets(_ assets: [ImagePickerAsset], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
+  open func resolveAssets(_ assets: [ImagePickerAsset], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.isSynchronous = true
